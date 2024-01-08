@@ -12,7 +12,7 @@
 *.tf       @pinginc/terraform-reviewers
 *.sh       @pinginc/ops-reviewers
 *.swift    @pinginc/swift-reviewers
-*.cs       @pinginc/csharp-reviews
+*.cs       @pinginc/csharp-reviewers
 
 Dockerfile @pinginc/ops-reviewers
 /.circleci @pinginc/ops-reviewers
