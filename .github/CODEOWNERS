@@ -9,10 +9,13 @@
 *.jsx      @pinginc/react-reviewers
 *.py       @pinginc/python-reviewers
 *.go       @pinginc/go-reviewers
-*.tf       @pinginc/terraform-reviewers
 *.sh       @pinginc/ops-reviewers
 *.swift    @pinginc/swift-reviewers
 *.cs       @pinginc/csharp-reviewers
+
+*.tf           @pinginc/terraform-reviewers
+terraform/*.md @pinginc/terraform-reviewers
+*.hcl          @pinginc/terraform-reviewers
 
 Dockerfile @pinginc/ops-reviewers
 /.circleci @pinginc/ops-reviewers
