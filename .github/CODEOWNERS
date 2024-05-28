@@ -7,7 +7,6 @@
 # Language Reviewers
 # See https://git-scm.com/docs/gitignore#_pattern_format
 *.js       @pinginc/node-reviewers
-*.json     @pinginc/node-reviewers
 *.ts       @pinginc/node-reviewers
 *.tsx      @pinginc/react-reviewers
 *.jsx      @pinginc/react-reviewers
