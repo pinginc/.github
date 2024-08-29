@@ -1,7 +1,6 @@
 ## Summary
 
 - Explain in a few sentences what this PR changes.
-- Do not repeat the acceptance criteria of the ticket.
 
 ## Checklist
 
