@@ -1,0 +1,34 @@
+name: spdx
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: anchore/sbom-action@v0
+        with:
+          output-file: manifest.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Format spdx
+        run: |
+          jq . manifest.spdx.json > manifest.spdx.json.tmp
+          mv manifest.spdx.json.tmp manifest.spdx.json
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.PINGCI_TOKEN }}
+        id: auto-commit-action
+        with:
+          commit_message: 'chore: regenerate spdx'
+          commit_author: Laurel CI <ci@laurel.ai>
+          commit_user_name: ping-ci
+          commit_user_email: ci@laurel.ai
