@@ -1,0 +1,20 @@
+name: Dependency Review
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      # https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/configuring-the-dependency-review-action
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: always
+          deny-licenses: GPL-1.0-or-later,LGPL-2.0-or-later,AGPL-1.0-or-later,SSPL-1.0
+          fail-on-scopes: development,runtime,unknown
+          fail-on-severity: high
