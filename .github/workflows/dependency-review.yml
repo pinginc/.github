@@ -18,4 +18,4 @@ jobs:
           deny-licenses: GPL-1.0-or-later,LGPL-2.0-or-later,AGPL-1.0-or-later,SSPL-1.0
           fail-on-scopes: development,runtime,unknown
           fail-on-severity: high
-          allow-dependencies-licenses: pkg:npm/@timebyping/eslint-config,pkg:npm/@cspell/dict-en-common-misspellings,pkg:npm/@timebyping/common
+          allow-dependencies-licenses: pkg:npm/@timebyping/eslint-config,pkg:npm/@cspell/dict-en-common-misspellings,pkg:npm/@timebyping/common,pkg:pip/psycopg2,pkg:pip/confluent-kafka,pkg:gomod/github.com/pinginc/cdk8s-platform-definitions
