@@ -2,7 +2,7 @@ name: spdx
 on:
   workflow_dispatch:
   schedule:
-    - cron: "12 4 * * 1"
+    - cron: 12 4 * * 1
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
           commit_user_email: ci@laurel.ai
           create_branch: true
           branch: spdx-update
-          push_options: '--force'
+          push_options: --force
       - name: Create PR
         uses: devops-infra/action-pull-request@v0.6.0
         with:
@@ -48,5 +48,5 @@ jobs:
           title: 'chore: regenerate spdx'
           label: dependencies
           ignore_users: ping-ci
-          body: "Automated regeneration of SPDX file."
+          body: Automated regeneration of SPDX file.
           assignee: icco
