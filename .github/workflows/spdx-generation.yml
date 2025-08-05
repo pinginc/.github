@@ -9,7 +9,6 @@ jobs:
     permissions:
       actions: read
       contents: write
-      pull-requests: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +26,7 @@ jobs:
         run: |
           jq . manifest.spdx.json > manifest.spdx.json.tmp
           mv manifest.spdx.json.tmp manifest.spdx.json
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.PINGCI_TOKEN }}
         id: auto-commit-action
@@ -36,17 +35,3 @@ jobs:
           commit_author: Laurel CI <ci@laurel.ai>
           commit_user_name: ping-ci
           commit_user_email: ci@laurel.ai
-          create_branch: true
-          branch: spdx-update
-          push_options: --force
-      - name: Create PR
-        uses: devops-infra/action-pull-request@v0.6.0
-        with:
-          github_token: ${{ secrets.PINGCI_TOKEN }}
-          source_branch: spdx-update
-          target_branch: main
-          title: 'chore: regenerate spdx'
-          label: dependencies
-          ignore_users: ping-ci
-          body: Automated regeneration of SPDX file.
-          assignee: icco
