@@ -5,7 +5,7 @@
 * @pinginc/time-owls
 
 # Language Reviewers
-# See https://git-scm.com/docs/gitignore#_pattern_format
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 *.js       @pinginc/node-reviewers
 *.ts       @pinginc/node-reviewers
 *.tsx      @pinginc/react-reviewers
@@ -25,3 +25,7 @@ go.sum     @pinginc/go-reviewers
 Dockerfile @pinginc/ops-reviewers
 /.circleci @pinginc/ops-reviewers
 /.github   @pinginc/ops-reviewers
+
+# Repo-specific
+
+
