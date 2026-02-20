@@ -1,0 +1,88 @@
+name: Co-Author Approval Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  co-author-approval-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const pr = context.payload.pull_request
+              ?? context.payload.review?.pull_request;
+            const prNumber = pr.number;
+
+            // 1. Get commits with co-author info via GraphQL
+            const { repository } = await github.graphql(`
+              query($owner: String!, $repo: String!, $pr: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $pr) {
+                    commits(first: 100) {
+                      nodes {
+                        commit {
+                          authors(first: 10) {
+                            nodes { user { login } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pr: prNumber,
+            });
+
+            // 2. Collect all commit author/co-author logins
+            const commitAuthors = new Set();
+            for (const node of repository.pullRequest.commits.nodes) {
+              for (const author of node.commit.authors.nodes) {
+                if (author.user?.login) {
+                  commitAuthors.add(author.user.login.toLowerCase());
+                }
+              }
+            }
+
+            // 3. Also parse PR body for "Requested by:" pattern
+            const bodyMatch = pr.body?.match(/Requested by:\s*(\S+)/i);
+            if (bodyMatch) {
+              const requested = bodyMatch[1].replace(/@/g, '');
+              commitAuthors.add(requested.toLowerCase());
+            }
+
+            // 4. Remove bot accounts from the set
+            for (const author of commitAuthors) {
+              if (author.includes('[bot]')) commitAuthors.delete(author);
+            }
+
+            // 5. Get all approving reviews
+            const reviews = await github.rest.pulls.listReviews({
+              ...context.repo,
+              pull_number: prNumber,
+            });
+            const approvers = reviews.data
+              .filter(r => r.state === 'APPROVED' && r.user)
+              .map(r => r.user.login.toLowerCase());
+
+            // 6. Check for overlap
+            const selfApprovers = approvers
+              .filter(a => commitAuthors.has(a));
+
+            if (selfApprovers.length > 0) {
+              core.setFailed(
+                `Co-author self-approval detected: ${selfApprovers.join(', ')} ` +
+                `approved this PR but are also commit authors/co-authors. ` +
+                `A different engineer must review and approve this PR.`
+              );
+            } else {
+              core.info('No co-author self-approvals detected.');
+            }
