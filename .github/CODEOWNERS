@@ -4,28 +4,6 @@
 # Repo Owner
 * @pinginc/time-owls
 
-# Language Reviewers
-# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-*.js       @pinginc/node-reviewers
-*.ts       @pinginc/node-reviewers
-*.tsx      @pinginc/react-reviewers
-*.jsx      @pinginc/react-reviewers
-*.py       @pinginc/python-reviewers
-*.go       @pinginc/go-reviewers
-go.mod     @pinginc/go-reviewers
-go.sum     @pinginc/go-reviewers
-*.sh       @pinginc/ops-reviewers
-*.swift    @pinginc/swift-reviewers
-*.cs       @pinginc/csharp-reviewers
-
-*.hcl              @pinginc/terraform-reviewers
-*.tf               @pinginc/terraform-reviewers
-/terraform/**/*.md @pinginc/terraform-reviewers
-
-Dockerfile @pinginc/ops-reviewers
-/.circleci @pinginc/ops-reviewers
-/.github   @pinginc/ops-reviewers
-
 # Repo-specific
 
 
