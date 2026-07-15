@@ -1,0 +1,78 @@
+name: PR Policy
+
+# Canonical PR Policy workflow, synced to every managed repo by pinginc/repos.
+# https://www.notion.so/laurel-ai/38980a6931918189906fdd33bcb187c3
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  labeler:
+    name: labeler
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pinginc/actions/.github/actions/labeler@main
+
+  add-author:
+    name: add-author
+    if: github.event.pull_request.assignee == null
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: gh pr edit "$PR_NUMBER" --add-assignee "$AUTHOR" || echo "::warning::could not assign $AUTHOR"
+
+  pr-lint:
+    name: pr-lint
+    needs: labeler
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pinginc/actions/.github/actions/pr-lint@main
+        with:
+          strict: "true"
+
+  review-picker:
+    name: review-picker
+    needs: labeler
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      # skip repos with no generated CODEOWNERS (no owning team to pick from)
+      - name: Detect CODEOWNERS
+        id: co
+        shell: bash
+        run: |
+          if [ -f .github/CODEOWNERS ]; then
+            echo "present=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "present=false" >>"$GITHUB_OUTPUT"
+          fi
+      - if: steps.co.outputs.present == 'true'
+        uses: pinginc/actions/.github/actions/review-picker@main
+        with:
+          # PAT needed to read org team membership (GITHUB_TOKEN cannot)
+          github-token: ${{ secrets.PINGCI_TOKEN }}
