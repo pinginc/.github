@@ -1,6 +1,8 @@
 ## Why
 
-<!-- The problem or goal in 1-2 sentences. Reviewers read this first. -->
+<!--
+  One sentence on what the PR does, then the problem or goal. The audience is the reviewer, and this is the first thing they read. Keep the whole body short.
+-->
 
 ## How to verify
 
@@ -12,10 +14,14 @@
   "covered by <test file>" instead. Delete if N/A.
 -->
 
-## Risk & notes
+## Risks
 
 <!--
-  Optional. Only real risks, blast radius, or tradeoffs that the reviewer
-  should be aware of during review. Design rationale does not belong here.
-  Delete if none.
+  Optional. Only real risks, blast radius, or tradeoffs that change how the reviewer should read the diff, one sentence each. Delete if none.
+-->
+
+## Notes
+
+<!--
+  Optional. Context a reviewer would otherwise have to ask for, such as a decision and why, the data behind a threshold, or a link to where it was settled. Leave out process narration. Delete if none.
 -->
