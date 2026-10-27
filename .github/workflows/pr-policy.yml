@@ -71,8 +71,19 @@ jobs:
           else
             echo "present=false" >>"$GITHUB_OUTPUT"
           fi
+      # Load counts open review requests across every repo, so the token reaches all of them.
+      - id: token
+        if: steps.co.outputs.present == 'true'
+        uses: pinginc/actions/.github/actions/pingci-token@main
+        with:
+          app-client-id: ${{ secrets.PINGCI_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.PINGCI_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.PINGCI_TOKEN }}
+          repositories: "*"
+          permission-members: read
+          permission-pull-requests: write
       - if: steps.co.outputs.present == 'true'
         uses: pinginc/actions/.github/actions/review-picker@main
         with:
-          # PAT needed to read org team membership (GITHUB_TOKEN cannot)
-          github-token: ${{ secrets.PINGCI_TOKEN }}
+          # App token needed to read org team membership (GITHUB_TOKEN cannot)
+          github-token: ${{ steps.token.outputs.token }}
