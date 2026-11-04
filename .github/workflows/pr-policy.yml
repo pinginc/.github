@@ -20,7 +20,7 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pinginc/actions/.github/actions/labeler@main
 
   add-author:
@@ -46,7 +46,7 @@ jobs:
       issues: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pinginc/actions/.github/actions/pr-lint@main
         with:
           strict: "true"
@@ -54,13 +54,15 @@ jobs:
   review-picker:
     name: review-picker
     needs: labeler
+    # ready_for_review is in the triggers, so a draft gets its reviewer when it leaves draft.
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # skip repos with no generated CODEOWNERS (no owning team to pick from)
       - name: Detect CODEOWNERS
         id: co
