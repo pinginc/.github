@@ -28,14 +28,22 @@ jobs:
     if: github.event.pull_request.assignee == null
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: write
     steps:
-      - env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: gh pr edit "$PR_NUMBER" --add-assignee "$AUTHOR" || echo "::warning::could not assign $AUTHOR"
+      # Matching an agent PR's requester reads org members, which GITHUB_TOKEN cannot.
+      - id: token
+        if: github.event.pull_request.user.type == 'Bot'
+        uses: pinginc/actions/.github/actions/pingci-token@main
+        with:
+          app-client-id: ${{ secrets.PINGCI_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.PINGCI_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.PINGCI_TOKEN }}
+          permission-members: read
+          permission-pull-requests: write
+      - uses: pinginc/actions/.github/actions/assign-author@main
+        with:
+          github-token: ${{ steps.token.outputs.token || github.token }}
 
   pr-lint:
     name: pr-lint
