@@ -2,10 +2,22 @@ name: Close stale PRs
 
 on:
   schedule:
-    - cron: 0 0 */2 * * # Runs every other day at midnight UTC
+    # Weekdays after the 16:00 PT freeze window closes (PDT and PST), so the whole PT day counts.
+    - cron: 37 0 * * 2-6
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Log what would happen without commenting, labeling, or closing
+        type: boolean
+        default: false
+
+# A manual run during the scheduled one would otherwise post a second warning or close comment.
+concurrency:
+  group: stale
+  cancel-in-progress: false
 
 permissions:
+  contents: read
   issues: write
   pull-requests: write
 
@@ -13,4 +25,15 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
+      - id: token
+        uses: pinginc/actions/.github/actions/pingci-token@main
+        with:
+          app-client-id: ${{ secrets.PINGCI_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.PINGCI_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.PINGCI_TOKEN }}
+          repositories: spacelift
+          permission-contents: read
       - uses: pinginc/actions/.github/actions/stale@main
+        with:
+          schedule-token: ${{ steps.token.outputs.token }}
+          dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
