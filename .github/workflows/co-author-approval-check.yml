@@ -10,7 +10,7 @@ on:
 jobs:
   co-author-approval-check:
     if: github.event_name != 'merge_group'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.PINGINC_RUNNER || 'namespace-profile-ubuntu-24-amd64-1c-2g' }}
     permissions:
       contents: read
       pull-requests: read
