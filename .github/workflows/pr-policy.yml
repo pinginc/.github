@@ -7,26 +7,18 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
 
+# A title or body edit (bots rewrite PR bodies often) only re-runs pr-lint, in
+# its own concurrency group, so it never cancels or displaces the run for a push.
+# An edit that changes the base branch changes the diff, so it counts as a push.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}${{ github.event.action == 'edited' && !github.event.changes.base && '-edit' || '' }}
   cancel-in-progress: true
 
 jobs:
-  labeler:
-    name: labeler
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pinginc/actions/.github/actions/labeler@main
-
   add-author:
     name: add-author
     if: github.event.pull_request.assignee == null
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.PINGINC_RUNNER || 'namespace-profile-ubuntu-24-amd64-2c-4g' }}
     permissions:
       contents: read
       pull-requests: write
@@ -45,26 +37,60 @@ jobs:
         with:
           github-token: ${{ steps.token.outputs.token || github.token }}
 
+  # One job, so the labels and the lint share a runner, a checkout and the
+  # pingci setup. The check keeps the name pr-lint, which rulesets require.
   pr-lint:
     name: pr-lint
-    needs: labeler
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.PINGINC_RUNNER || 'namespace-profile-ubuntu-24-amd64-2c-4g' }}
     permissions:
       contents: read
-      issues: read
+      issues: write
       pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pinginc/actions/.github/actions/pr-lint@main
+      # Labels come from the diff, which a title or body edit doesn't change,
+      # so an edit skips the labeler once the PR has a PR-Risk label and exactly
+      # one authorship label, which is what pr-lint requires. An edit still labels
+      # a PR that lacks them, e.g. an edit that races the push run; the labeler
+      # is idempotent.
+      # The label names below are copies of labeler/labels.sh and
+      # labeler/classify.sh; rename them together. The "pure edit" test
+      # (edited, base unchanged) is repeated in the concurrency group and in
+      # review-picker's if:, since job-level if: and concurrency can't read a
+      # step or job output without adding a job to every run.
+      - name: Label
+        id: labeler
+        if: >-
+          github.event.action != 'edited' || github.event.changes.base ||
+          !contains(join(github.event.pull_request.labels.*.name, '|'), 'PR-Risk: ') ||
+          (contains(github.event.pull_request.labels.*.name, 'ai-authored') && contains(github.event.pull_request.labels.*.name, 'ai-assisted')) ||
+          (contains(github.event.pull_request.labels.*.name, 'ai-authored') && contains(github.event.pull_request.labels.*.name, 'human-authored')) ||
+          (contains(github.event.pull_request.labels.*.name, 'ai-assisted') && contains(github.event.pull_request.labels.*.name, 'human-authored')) ||
+          !(contains(github.event.pull_request.labels.*.name, 'ai-authored') ||
+            contains(github.event.pull_request.labels.*.name, 'ai-assisted') ||
+            contains(github.event.pull_request.labels.*.name, 'human-authored'))
+        # pr-lint still runs and reports on the labels the PR has; the last step fails the job.
+        continue-on-error: true
+        uses: pinginc/actions/.github/actions/labeler@main
+      - name: Lint
+        uses: pinginc/actions/.github/actions/pr-lint@main
         with:
           strict: "true"
+      # Runs after a lint failure too, so a labeler error is always named.
+      - name: Fail on a labeler error
+        if: ${{ !cancelled() && steps.labeler.outcome == 'failure' }}
+        shell: bash
+        run: |
+          echo "::error title=labeler::The labeler step failed, so the PR-Risk or authorship label may be missing or stale. Its log is in the Label step above."
+          exit 1
 
   review-picker:
     name: review-picker
-    needs: labeler
+    # It reads CODEOWNERS and history, not labels, so it starts with the other jobs.
     # ready_for_review is in the triggers, so a draft gets its reviewer when it leaves draft.
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    # A title or body edit doesn't change who should review.
+    if: github.event.pull_request.draft == false && (github.event.action != 'edited' || github.event.changes.base)
+    runs-on: ${{ vars.PINGINC_RUNNER || 'namespace-profile-ubuntu-24-amd64-2c-4g' }}
     permissions:
       contents: read
       issues: write
