@@ -6,7 +6,7 @@ on:
 
 jobs:
   generate:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.PINGINC_RUNNER || 'namespace-profile-ubuntu-24-amd64-1c-2g' }}
     permissions:
       actions: read
       contents: read
